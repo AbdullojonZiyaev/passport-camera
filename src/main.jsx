@@ -1,13 +1,19 @@
 import { StrictMode, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
-import App from './App.jsx'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import App from './App.jsx';
 
 function Root() {
-  const [mode, setMode] = useState('app'); // 'app' or 'mrz'
   return (
     <StrictMode>
-       <App /> 
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Navigate to="/scanner" replace />} />
+          <Route path="/scanner/*" element={<App />} />
+          <Route path="*" element={<Navigate to="/scanner" replace />} />
+        </Routes>
+      </BrowserRouter>
     </StrictMode>
   );
 }
