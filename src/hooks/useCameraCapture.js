@@ -64,16 +64,19 @@ export const useCameraCapture = () => {
 
         const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
         const blob = dataURLtoBlob(dataUrl);
-        const formData = new FormData();
-        formData.append('file', blob, 'frame.jpg');
 
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 4000); // Increased timeout
+        const timeout = setTimeout(() => controller.abort(), 8000); // Increased timeout
 
-        // First try the preview endpoint for real-time feedback
-        const previewResponse = await fetch('https://wifi.tojiktelecom.tj/scanner/read-mrz-preview/', {
+        // Create FormData with preview=true for real-time feedback
+        const previewFormData = new FormData();
+        previewFormData.append('file', blob, 'frame.jpg');
+        // Don't append preview as string, use URL parameter instead
+        
+        // First try the unified endpoint with preview=true for real-time feedback
+        const previewResponse = await fetch('http://localhost:8000/read-mrz/?preview=true', {
           method: 'POST',
-          body: formData,
+          body: previewFormData,
           signal: controller.signal,
         });
 
@@ -86,9 +89,14 @@ export const useCameraCapture = () => {
           // If quality is excellent, try the full processing
           if (previewData.status === 'excellent') {
             try {
-              const fullResponse = await fetch('http://10.231.58.10:8000/read-mrz/', {
+              // Create FormData with preview=false for full processing
+              const fullFormData = new FormData();
+              fullFormData.append('file', blob, 'frame.jpg');
+              // Don't append preview as string, use URL parameter instead
+
+              const fullResponse = await fetch('http://localhost:8000/read-mrz/?preview=false', {
                 method: 'POST',
-                body: formData,
+                body: fullFormData,
               });
 
               const fullText = await fullResponse.text();
@@ -108,26 +116,51 @@ export const useCameraCapture = () => {
             }
           }
         } else {
-          // Handle non-OK responses
-          setValidationFeedback({
-            valid_score: 0,
-            validation_percentage: 0,
-            status: 'error',
-            message: `Server error: ${previewResponse.status}`
-          });
+          // Handle non-OK responses from preview endpoint
+          try {
+            const errorData = await previewResponse.json();
+            // Backend should return preview response even on errors when preview=true
+            // But if it returns an error, treat it as poor quality
+            setValidationFeedback({
+              valid_score: 0,
+              validation_percentage: 0,
+              status: 'poor',
+              message: errorData.detail || `Server error: ${previewResponse.status}`
+            });
+          } catch (parseError) {
+            // If we can't parse the error response
+            const errorText = await previewResponse.text();
+            setValidationFeedback({
+              valid_score: 0,
+              validation_percentage: 0,
+              status: 'error',
+              message: `Server error: ${previewResponse.status}`
+            });
+          }
         }
       } catch (err) {
         console.log('Frame processing error:', err.message || err);
+        
+        // Better error handling based on error type
+        let errorMessage = 'Connection error';
+        if (err.name === 'AbortError') {
+          errorMessage = 'Request timeout - check connection';
+        } else if (err.message.includes('Failed to fetch')) {
+          errorMessage = 'Network error - check internet';
+        } else if (err.message.includes('CORS')) {
+          errorMessage = 'CORS error - check server';
+        }
+        
         setValidationFeedback({
           valid_score: 0,
           validation_percentage: 0,
           status: 'error',
-          message: err.name === 'AbortError' ? 'Request timeout' : 'Connection error'
+          message: errorMessage
         });
       } finally {
         isProcessingRef.current = false;
       }
-    }, 1000); // Increased interval to 1 second to reduce load
+    }, 800); // Slightly faster interval since backend handles preview better
   }, [dataURLtoBlob, stopStreaming]);
 
   const startCapture = useCallback(async () => {

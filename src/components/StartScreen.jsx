@@ -1,6 +1,6 @@
 import cameraIcon from '../assets/camera.svg';
 
-export const StartScreen = ({ onCameraClick, onFileSelect }) => {
+export const StartScreen = ({ onCameraClick }) => {
   return (
     <div style={{ 
       display: 'flex', 
@@ -34,22 +34,15 @@ export const StartScreen = ({ onCameraClick, onFileSelect }) => {
         />
       </button>
       
-      <button 
-        onClick={onFileSelect} 
-        style={{ 
-          padding: '12px 32px', 
-          borderRadius: 8, 
-          border: '1.5px solid #e2e8f0', 
-          background: '#f1f5f9', 
-          color: '#222', 
-          fontWeight: 600, 
-          fontSize: 18, 
-          cursor: 'pointer', 
-          boxShadow: '0 1px 4px rgba(0,0,0,0.06)' 
-        }}
-      >
-        Choose File
-      </button>
+      <p style={{
+        color: '#666',
+        fontSize: 16,
+        textAlign: 'center',
+        margin: 0,
+        fontWeight: 500
+      }}>
+        Tap to scan passport with camera
+      </p>
     </div>
   );
 };

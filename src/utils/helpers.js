@@ -1,17 +1,25 @@
 export const getStatusColor = (status) => {
   switch (status) {
     case 'excellent': return '#10b981'; // green
-    case 'good': return '#3b82f6';      // blue
+    case 'good': return '#3b82f6';      // blue  
     case 'fair': return '#f59e0b';      // yellow
     case 'poor': return '#ef4444';      // red
     case 'no_mrz_detected': return '#6b7280'; // gray
-    default: return '#6b7280';
+    case 'error': return '#ef4444';     // red
+    default: return '#6b7280';          // gray
   }
 };
 
 export const getStatusText = (feedback) => {
   if (!feedback) return '';
-  return `Score: ${feedback.valid_score}/10 (${feedback.validation_percentage}%) - ${feedback.message}`;
+  
+  // If we have a custom message from the backend, use it
+  if (feedback.message) {
+    return `Score: ${feedback.valid_score}/10 (${feedback.validation_percentage}%) - ${feedback.message}`;
+  }
+  
+  // Fallback to generic message
+  return `Score: ${feedback.valid_score}/10 (${feedback.validation_percentage}%)`;
 };
 
 export const downloadImage = (imageDataUrl, filename = 'image') => {

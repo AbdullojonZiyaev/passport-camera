@@ -1,6 +1,5 @@
 import './App.css';
 import { useCameraCapture } from './hooks/useCameraCapture.js';
-import { useFileUpload } from './hooks/useFileUpload.js';
 import { StartScreen } from './components/StartScreen.jsx';
 import { CameraView } from './components/CameraView.jsx';
 import { PhotoPreview } from './components/PhotoPreview.jsx';
@@ -22,12 +21,6 @@ function App() {
     setApiResult
   } = useCameraCapture();
 
-  const {
-    fileInputRef,
-    handleFileInput,
-    handleFileChange
-  } = useFileUpload(setPhoto, () => {}, setApiResult);
-
   const handleRetake = () => {
     setPhoto(null);
     setApiResult(null);
@@ -47,18 +40,9 @@ function App() {
       right: 0, 
       bottom: 0 
     }}>
-      <input 
-        ref={fileInputRef} 
-        type="file" 
-        accept="image/*" 
-        style={{ display: 'none' }} 
-        onChange={handleFileChange} 
-      />
-
       {!isCapturing && !photo && (
         <StartScreen 
           onCameraClick={startCapture}
-          onFileSelect={handleFileInput}
         />
       )}
 
