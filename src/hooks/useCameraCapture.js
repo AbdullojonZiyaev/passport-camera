@@ -11,6 +11,7 @@ export const useCameraCapture = () => {
   const videoRef = useRef();
   const canvasRef = useRef();
   const streamIntervalRef = useRef();
+  const isProcessingRef = useRef(false);
 
   const dataURLtoBlob = useCallback((dataUrl) => {
     const [header, base64] = dataUrl.split(',');
@@ -24,6 +25,7 @@ export const useCameraCapture = () => {
   const stopStreaming = useCallback(() => {
     setIsStreaming(false);
     setValidationFeedback(null);
+    isProcessingRef.current = false;
     if (streamIntervalRef.current) {
       clearInterval(streamIntervalRef.current);
       streamIntervalRef.current = null;
@@ -39,10 +41,21 @@ export const useCameraCapture = () => {
     setIsStreaming(true);
 
     streamIntervalRef.current = setInterval(async () => {
+      // Skip if already processing a request
+      if (isProcessingRef.current) {
+        console.log('Skipping frame - previous request still processing');
+        return;
+      }
+
       try {
+        isProcessingRef.current = true;
+        
         const video = videoRef.current;
         const canvas = canvasRef.current;
-        if (video.videoWidth === 0 || video.videoHeight === 0) return;
+        if (video.videoWidth === 0 || video.videoHeight === 0) {
+          isProcessingRef.current = false;
+          return;
+        }
 
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
@@ -55,10 +68,10 @@ export const useCameraCapture = () => {
         formData.append('file', blob, 'frame.jpg');
 
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 5000);
+        const timeout = setTimeout(() => controller.abort(), 4000); // Increased timeout
 
         // First try the preview endpoint for real-time feedback
-        const previewResponse = await fetch('http://localhost:8000/read-mrz-preview/', {
+        const previewResponse = await fetch('https://wifi.tojiktelecom.tj/scanner/read-mrz-preview/', {
           method: 'POST',
           body: formData,
           signal: controller.signal,
@@ -73,7 +86,7 @@ export const useCameraCapture = () => {
           // If quality is excellent, try the full processing
           if (previewData.status === 'excellent') {
             try {
-              const fullResponse = await fetch('http://localhost:8000/read-mrz/', {
+              const fullResponse = await fetch('http://10.231.58.10:8000/read-mrz/', {
                 method: 'POST',
                 body: formData,
               });
@@ -94,6 +107,14 @@ export const useCameraCapture = () => {
               console.log('Full processing failed, continuing with preview');
             }
           }
+        } else {
+          // Handle non-OK responses
+          setValidationFeedback({
+            valid_score: 0,
+            validation_percentage: 0,
+            status: 'error',
+            message: `Server error: ${previewResponse.status}`
+          });
         }
       } catch (err) {
         console.log('Frame processing error:', err.message || err);
@@ -101,10 +122,12 @@ export const useCameraCapture = () => {
           valid_score: 0,
           validation_percentage: 0,
           status: 'error',
-          message: 'Connection error'
+          message: err.name === 'AbortError' ? 'Request timeout' : 'Connection error'
         });
+      } finally {
+        isProcessingRef.current = false;
       }
-    }, 500); // Check every 500ms for faster feedback
+    }, 1000); // Increased interval to 1 second to reduce load
   }, [dataURLtoBlob, stopStreaming]);
 
   const startCapture = useCallback(async () => {

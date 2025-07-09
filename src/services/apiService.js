@@ -2,7 +2,7 @@ export const sendFileToAPI = async (file) => {
   try {
     const formData = new FormData();
     formData.append('file', file, file.name);
-    const response = await fetch('http://localhost:8000/read-mrz/', {
+    const response = await fetch('https://wifi.tojiktelecom.tj/scanner/read-mrz/', {
       method: 'POST',
       body: formData,
     });
