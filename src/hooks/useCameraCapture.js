@@ -74,7 +74,7 @@ export const useCameraCapture = () => {
         // Don't append preview as string, use URL parameter instead
         
         // First try the unified endpoint with preview=true for real-time feedback
-        const previewResponse = await fetch('http://localhost:8000/read-mrz/?preview=true', {
+        const previewResponse = await fetch('https://wifi.tojiktelecom.tj/api-scanner/read-mrz/?preview=true', {
           method: 'POST',
           body: previewFormData,
           signal: controller.signal,
@@ -94,7 +94,7 @@ export const useCameraCapture = () => {
               fullFormData.append('file', blob, 'frame.jpg');
               // Don't append preview as string, use URL parameter instead
 
-              const fullResponse = await fetch('http://localhost:8000/read-mrz/?preview=false', {
+              const fullResponse = await fetch('https://wifi.tojiktelecom.tj/api-scanner/read-mrz/?preview=false', {
                 method: 'POST',
                 body: fullFormData,
               });
