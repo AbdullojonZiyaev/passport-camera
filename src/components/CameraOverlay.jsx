@@ -20,11 +20,11 @@ export const CameraOverlay = ({ isCapturing, validationFeedback, videoRef, canva
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       // MRZ typically occupies bottom 20% of the image
-      const boxMarginX = canvas.width * 0.05; // small margin on left/right
-      const boxWidth = canvas.width - 2 * boxMarginX;
-      const boxHeight = canvas.height * 0.20; // 20% of height
-      const boxX = boxMarginX;
-      const boxY = canvas.height - boxHeight - 20; // 20px padding from bottom
+      const margin = 32;
+      const boxWidth = canvas.width - margin * 2;
+      const boxHeight = boxWidth / 1.42;
+      const boxX = margin;
+      const boxY = (canvas.height - boxHeight) / 2;
 
       // Dynamic color based on validation feedback
       const color = validationFeedback ? getStatusColor(validationFeedback.status) : '#e11d48';
