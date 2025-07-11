@@ -13,6 +13,8 @@ export const useCameraCapture = () => {
   const streamIntervalRef = useRef();
   const isProcessingRef = useRef(false);
 
+  // Get API URL from environment variables
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const dataURLtoBlob = useCallback((dataUrl) => {
     const [header, base64] = dataUrl.split(',');
     const mime = header.match(/:(.*?);/)[1];
@@ -74,7 +76,7 @@ export const useCameraCapture = () => {
         // Don't append preview as string, use URL parameter instead
         
         // First try the unified endpoint with preview=true for real-time feedback
-        const previewResponse = await fetch('https://wifi.tojiktelecom.tj/api-scanner/read-mrz/?preview=true', {
+        const previewResponse = await fetch(`${API_BASE_URL}/read-mrz/?preview=true`, {
           method: 'POST',
           body: previewFormData,
           signal: controller.signal,
@@ -94,7 +96,7 @@ export const useCameraCapture = () => {
               fullFormData.append('file', blob, 'frame.jpg');
               // Don't append preview as string, use URL parameter instead
 
-              const fullResponse = await fetch('https://wifi.tojiktelecom.tj/api-scanner/read-mrz/?preview=false', {
+              const fullResponse = await fetch(`${API_BASE_URL}/read-mrz/?preview=false`, {
                 method: 'POST',
                 body: fullFormData,
               });
@@ -161,7 +163,7 @@ export const useCameraCapture = () => {
         isProcessingRef.current = false;
       }
     }, 800); // Slightly faster interval since backend handles preview better
-  }, [dataURLtoBlob, stopStreaming]);
+  }, [dataURLtoBlob, stopStreaming, API_BASE_URL]);
 
   const startCapture = useCallback(async () => {
     setError(null);
